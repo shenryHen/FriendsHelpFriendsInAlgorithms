@@ -1,3 +1,8 @@
+/*
+Authors: Daniel Brennan, Henry Shen, Conor Culleton
+Project: Binary Tree for Algorithms
+Due Date: 10/15/16
+*/
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -199,6 +204,7 @@ int search(int key, Node **rootPtr){
 }
 
 //for predecessor and successor do the same thing we do to replace nodes after deleting them
+//should find next largest key
 int succ(int key, Node **rootPtr){
 	//if the key is not in the tree return -1;
 	if(search(key) == 0){
@@ -242,6 +248,50 @@ int succ(int key, Node **rootPtr){
 	}
 }
 
+//should find next smallest key
+int pred(int key, Node **rootPtr){
+	//if the key is not in the tree return -1;
+	if(search(key) == 0){
+		return -1;
+	}
+	//if the key is min return -1
+	if(key == min(*rootPtr){
+		return -1;
+	}
+	//if the key is the max return -1
+	if(key == max(*rootPtr){
+		return -1;
+	}
+	//if the tree is empty return -1
+	if(rootPtr = NULL){
+		return -1;
+	}
+	//set the searchPtr equal to the root
+	Node *searchPtr = *rootPtr;
+	
+	//find where the key is in the tree
+	//search left of current spot in tree
+	if(key < searchPtr->key){
+		searchPtr = searchPtr->left;
+	}
+	//search right of current spot in tree
+	else if (key > searchPtr->key){
+		searchPtr = searchPtr->right;
+	}
+	//the key has been found
+	else if (key == searchPtr->key){
+		//go one to the left
+			searchPtr = searchPtr->left;
+			
+		//go all the way to the right until it is a leaf
+		while(searchPtr->right != NULL){ //go to rightmost node in the left subtree
+			searchPtr = searchPtr->right;	
+		}
+		//return the value of the succ
+		return searchPtr->key;
+	}
+}
+
 int main(int argc, char const *argv[])
 {
 	Node *root = NULL;
@@ -249,32 +299,3 @@ int main(int argc, char const *argv[])
 	insert(1, &root);
 	return 0;
 }
-
-
-/*while(searchPtr != NULL){
-	if (searchPtr->key == key){
-		Node *newPtr = searchPtr->right; //right might be null, 
-		while(newPtr->left != NULL){ //go to leftmost node in the right subtree
-			
-		}
-		break;
-	}
-}*/
-
-/*if (searchPtr->left == NULL){
-					//insert key in to left 
-					searchPtr->left = malloc(sizeof(Node));
-					searchPtr = searchPtr->left; //this step for referencing only
-					searchPtr->key = key;
-					searchPtr->parent = parentPtrnew;
-				}
-				else if (searchPtr->right == NULL){
-					searchPtr->right = new Node;
-					searchPtr = searchPtr->right; //this step for referencing only
-					searchPtr->key = key;
-					searchPtr->parent = parentPtr;
-				}
-				else{
-					parentPtr = searchPtr;
-					searchPtr = searchPtr->left;
-				}*/
