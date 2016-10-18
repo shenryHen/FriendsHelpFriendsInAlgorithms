@@ -25,10 +25,7 @@ typedef struct Node
 //@param rootPtr, should be the root of the tree 
 int insert(int key, Node **rootPtr){
 	Node *ptr;
-<<<<<<< HEAD
 	//if the tree is empty create the tree inserting the new key as the root
-=======
->>>>>>> refs/remotes/origin/master
 	if (!*rootPtr){
 		ptr = malloc( sizeof(Node));
 		ptr->key = key;
@@ -54,15 +51,10 @@ int insert(int key, Node **rootPtr){
 				searchPtr = searchPtr->right;
 			}	
 		}
-<<<<<<< HEAD
-		//inserts node onto the end of the tree
-=======
->>>>>>> refs/remotes/origin/master
 		Node *newNode = malloc(sizeof(Node));
 		newNode->key = key;
 		if (key < parentPtr->key){
 			parentPtr->left = newNode;
-<<<<<<< HEAD
 			newNode->parent = parentPtr;
 			newNode->numCollisions++;
 			return key;
@@ -72,11 +64,9 @@ int insert(int key, Node **rootPtr){
 			newNode->parent = parentPtr;
 			newNode->numCollisions++;
 			return key;
-=======
 		}
 		else if (key > parentPtr->key) {
 			parentPtr->right = newNode;
->>>>>>> refs/remotes/origin/master
 		}
 		else{
 			printf("WtF happend.\n");
@@ -84,7 +74,6 @@ int insert(int key, Node **rootPtr){
 		}
 	}
 }
-<<<<<<< HEAD
 
 int delete(int key, Node **rootPtr){
 	//if the tree is empty return
@@ -141,8 +130,7 @@ int delete(int key, Node **rootPtr){
 		}
 	}
 }
-=======
->>>>>>> refs/remotes/origin/master
+
 int main(int argc, char const *argv[])
 {
 	Node *root = NULL;
@@ -151,8 +139,6 @@ int main(int argc, char const *argv[])
 	return 0;
 }
 
-
-<<<<<<< HEAD
 /*while(searchPtr != NULL){
 	if (searchPtr->key == key){
 		Node *newPtr = searchPtr->right; //right might be null, 
@@ -163,8 +149,6 @@ int main(int argc, char const *argv[])
 	}
 }*/
 
-=======
->>>>>>> refs/remotes/origin/master
 /*if (searchPtr->left == NULL){
 					//insert key in to left 
 					searchPtr->left = malloc(sizeof(Node));
@@ -183,6 +167,3 @@ int main(int argc, char const *argv[])
 					searchPtr = searchPtr->left;
 <<<<<<< HEAD
 				}*/
-=======
-				}*/
->>>>>>> refs/remotes/origin/master
