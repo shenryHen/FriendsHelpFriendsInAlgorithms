@@ -133,9 +133,43 @@ int delete(int key, Node **rootPtr){
 
 int main(int argc, char const *argv[])
 {
+	char line[32];
+	FILE *input = fopen(argv[1], "r");
+	while(fgets(line, 32, input) != NULL){
+
+		char instruct[3];
+
+		for (int i = 0; i < 3; ++i){
+			instruct[i] = line[i];
+		}
+		
+		if (strncmp(instruct, "INS", 3) == 0){
+			printf("ins\n");
+		}
+		else if (strncmp(instruct, "DEL", 3) == 0){
+			printf("del\n");
+		}
+		else if (strncmp(instruct, "SEA", 3) == 0){
+			printf("sea\n");
+		}
+		else if (strncmp(instruct, "MIN", 3) == 0){
+			printf("min\n");
+		}
+		else if (strncmp(instruct, "SUC", 3) == 0){
+			printf("suc\n");
+		}
+		else if (strncmp(instruct, "HEI", 3) == 0){
+			printf("hei\n");
+		}
+		else {
+			printf("None of the above.\n");
+		}
+	}
 	Node *root = NULL;
-	printf("Hello World\n");
+	printf("\nHello World\n");
+
 	insert(1, &root);
+	fclose(input);
 	return 0;
 }
 
@@ -149,7 +183,7 @@ int main(int argc, char const *argv[])
 	}
 }*/
 
-/*if (searchPtr->left == NULL){
+		/*if (searchPtr->left == NULL){
 					//insert key in to left 
 					searchPtr->left = malloc(sizeof(Node));
 					searchPtr = searchPtr->left; //this step for referencing only
@@ -165,5 +199,4 @@ int main(int argc, char const *argv[])
 				else{
 					parentPtr = searchPtr;
 					searchPtr = searchPtr->left;
-<<<<<<< HEAD
 				}*/
