@@ -15,6 +15,7 @@ typedef struct Node
 	struct Node *parent;
 	struct Node *left;
 	struct Node *right;
+	struct Node *repeat;
 } Node; 
 //the root pointer of the tree 
 
@@ -43,12 +44,26 @@ int insert(int key, Node **rootPtr){
 		//move this this block somewhere else 
 		Node *searchPtr = *rootPtr;
 		Node *parentPtr;
-
+		
+		//creates new node for when we need to insert it
+		Node *newNode = malloc(sizeof(Node));
+		
 		//this while loop finds where to input the key
 		while(searchPtr != NULL){
 			//if the key is already in the tree
 			if(key == searchPtr->key){
+				//make sure to keep track of the number of collisions
 				searchPtr->numCollisions++;
+				//collisionPtr is created to bring us to the end of the chain
+				Node *collisionPtr = searchPtr;
+				//while loop to bring us to the end of the repeat chain
+				while(collisionPtr->repeat != NULL){
+					collisionPtr = collisionPtr->repeat;
+				}
+				//add newNode to the end of the chain
+				collisionPtr->repeat = newNode;
+				newNode->key = key;
+				return newNode->key;
 			}
 			else if (key < searchPtr->key){
 				//something happens...magic
@@ -61,7 +76,6 @@ int insert(int key, Node **rootPtr){
 			}	
 		}
 		//inserts node onto the end of the tree
-		Node *newNode = malloc(sizeof(Node));
 		newNode->key = key;
 		//if it should be a left leaf
 		if (key < parentPtr->key){
@@ -118,15 +132,30 @@ int delete(int key, Node **rootPtr){
 				//if the leaf we are trying to delete is a right node
 				if(tempParent->right == searchPtr){
 					tempParent->right = NULL;
-					collprint = searchPtr->key;
-					free(searchPtr);
+					//so that you can print the number of collisions
+					collprint = searchPtr->numCollisions;
+					//delete the entire chain starts here
+					Node *collisionPtr = searchPtr;
+					//get us to the end of the chain deleting as we go.
+					while(searchPtr->repeat != NULL){
+						collisionPtr = searchPtr;
+						searchPtr = searchPtr->repeat;
+						free(collisionPtr);
+					}
 					return collprint;
 				}
 				//if the leaf we are trying to delete is a left node
 				else if(tempParent->left == searchPtr){
 					tempParent->left = NULL;
-					collprint = searchPtr->key;
-					free(searchPtr);
+					collprint = searchPtr->numCollisions;
+					//delete the entire chain starts here
+					Node *collisionPtr = searchPtr;
+					//get us to the end of the chain deleting as we go.
+					while(searchPtr->repeat != NULL){
+						collisionPtr = searchPtr;
+						searchPtr = searchPtr->repeat;
+						free(collisionPtr);
+					}
 					return collprint;
 				}	
 				//how can we return the amount of collisions after freeing the value?
@@ -138,15 +167,30 @@ int delete(int key, Node **rootPtr){
 				//if its a right node, and there is no left node
 				if((tempParent->right == searchPtr) && (tempParent->left == NULL)){
 					tempParent->right = searchPtr->right;
-					collprint = searchPtr->key;
-					free(searchPtr);
+					collprint = searchPtr->numCollisions;
+					//delete the entire chain starts here
+					Node *collisionPtr = searchPtr;
+					//get us to the end of the chain deleting as we go.
+					while(searchPtr->repeat != NULL){
+						collisionPtr = searchPtr;
+						searchPtr = searchPtr->repeat;
+						free(collisionPtr);
+					}
 					return collprint;
 				}
 				//if its a left node, and there is no right node
 				else if ((tempParent->left == searchPtr) && (tempParent->right == NULL)){
-					tempParent->left == searchPtr->left
-					collprint = searchPtr->key;
-					free(searchPtr);
+
+					tempParent->left == searchPtr->left;
+					collprint = searchPtr->numCollisions;
+					//delete the entire chain starts here
+					Node *collisionPtr = searchPtr;
+					//get us to the end of the chain deleting as we go.
+					while(searchPtr->repeat != NULL){
+						collisionPtr = searchPtr;
+						searchPtr = searchPtr->repeat;
+						free(collisionPtr);
+					}
 					return collprint;
 				}
 				//if the node we are trying to delete has both right and left children
@@ -158,8 +202,15 @@ int delete(int key, Node **rootPtr){
 					searchPtr->key = newPtr->key;
 					if (newPtr->right != NULL){ // if newPtr has right children(can't have left)
 						newPtr->parent->left = newPtr->right;
-						collprint = searchPtr->key;
-						free(searchPtr);
+						collprint = searchPtr->numCollisions;
+						//delete the entire chain starts here
+						Node *collisionPtr = searchPtr;
+						//get us to the end of the chain deleting as we go.
+						while(searchPtr->repeat != NULL){
+							collisionPtr = searchPtr;
+							searchPtr = searchPtr->repeat;
+							free(collisionPtr);
+						}
 						return collprint;
 					} 
 				}
