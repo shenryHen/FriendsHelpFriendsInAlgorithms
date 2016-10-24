@@ -7,8 +7,9 @@ Due Date: 10/15/16
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "BinaryTree.h"
 
-typedef struct Node
+/*typedef struct Node
 {	 
 	int key;
 	int numCollisions;
@@ -16,7 +17,7 @@ typedef struct Node
 	struct Node *left;
 	struct Node *right;
 	struct Node *repeat;
-} Node; 
+} Node;*/ 
 //the root pointer of the tree 
 
 /*
@@ -26,75 +27,113 @@ typedef struct Node
 		if node->left is full, add to right
 		if node->right is full, add to left->left
 */
+int numNodes = 0;
 
 //inserts the node into the tree,
 //can accept duplicate keys
 //@param key, the key to be inserted
 //@param rootPtr, should be the root of the tree 
 int insert(int key, Node **rootPtr){
-	Node *ptr;
+	printf("\tin insert \n");
+	printf("%d\n", key);
+	Node *searchPtr = *rootPtr;
+	Node *parentPtr = NULL;
+	Node *newNode = malloc(sizeof(Node));
+	newNode->right = NULL; 
+	newNode->left = NULL;
+	newNode->parent = NULL;
 	//if the tree is empty create the tree inserting the new key as the root
 	if (!*rootPtr){
-		ptr = malloc( sizeof(Node));
-		ptr->key = key;
-		*rootPtr = ptr;
+		printf("\ttree empty \n");
+		*rootPtr = newNode;
+		//ERROR HERE?? *rootPtr = searchPtr;
+		return newNode->key;
 	}
 	else{
+		printf("\tadding to tree\n");
+		printf("search ptrs = %d %d \n ", searchPtr->left, searchPtr->right);
+		printf("searchPtr key = \n %d ", searchPtr->key);
+		printf("decl some vars \n");
 		//only for inserting at root
 		//move this this block somewhere else 
-		Node *searchPtr = *rootPtr;
-		Node *parentPtr;
-		
-		//creates new node for when we need to insert it
-		Node *newNode = malloc(sizeof(Node));
-		
+		if ((searchPtr->left == NULL) || (searchPtr->right == NULL)){ // if adding to root node
+			
+			printf("both sides null \n");
+			if (key < searchPtr->key){
+				searchPtr->left = newNode;
+				printf("err\n");
+			}
+			else if(key > searchPtr->key){
+				searchPtr->right = newNode;
+				printf("err\n");
+			}
+			else{
+				printf("do somee chanining here....\n");
+			}
+			return searchPtr->key;
+			printf("err\n");
+		}
+		else{
+			printf("%d some checking\n", searchPtr->left, searchPtr->right);
+		//creates new node for when we need to insert it		
 		//this while loop finds where to input the key
-		while(searchPtr != NULL){
-			//if the key is already in the tree
-			if(key == searchPtr->key){
-				//make sure to keep track of the number of collisions
-				searchPtr->numCollisions++;
-				//collisionPtr is created to bring us to the end of the chain
-				Node *collisionPtr = searchPtr;
-				//while loop to bring us to the end of the repeat chain
-				while(collisionPtr->repeat != NULL){
-					collisionPtr = collisionPtr->repeat;
+			while(searchPtr->right != NULL || searchPtr->left != NULL){
+				printf("\tin while\n");
+				//printf("%d\n ", searchPtr->key);
+				//if the key is already in the tree
+				if(key == searchPtr->key){
+					printf("Chaining...\n");
+					//make sure to keep track of the number of collisions
+					searchPtr->numCollisions++;
+					//collisionPtr is created to bring us to the end of the chain
+					Node *collisionPtr = searchPtr;
+					//while loop to bring us to the end of the repeat chain
+					while(collisionPtr->repeat != NULL){
+						collisionPtr = collisionPtr->repeat;
+					}
+					//add newNode to the end of the chain
+					collisionPtr->repeat = newNode;
+					newNode->key = key;
+					return newNode->key;
 				}
-				//add newNode to the end of the chain
-				collisionPtr->repeat = newNode;
-				newNode->key = key;
+				else if (key < searchPtr->key){
+					printf("\t\tleft\n");
+					//something happens...magic
+					parentPtr = searchPtr;
+					printf("%s\n", "dfedfe");
+					searchPtr = searchPtr->left;
+					printf("nulled\n");
+					printf("%d\n", searchPtr);
+				}
+				else { //when (key is > searchPtr->key)
+					parentPtr = searchPtr;
+					searchPtr = searchPtr->right;
+				}	
+			}
+
+			//inserts node onto the end of the tree
+			newNode->key = key;
+			numNodes++;
+			printf("creating node");
+			//if it should be a left leaf
+			if (key < parentPtr->key){
+				parentPtr->left = newNode;
+				newNode->parent = parentPtr;
+				newNode->numCollisions++;
 				return newNode->key;
 			}
-			else if (key < searchPtr->key){
-				//something happens...magic
-				parentPtr = searchPtr;
-				searchPtr = searchPtr->left;
+			//if it should be a right leaf
+			else if (key > parentPtr->key) {
+				parentPtr->right = newNode;
+				newNode->parent = parentPtr;
+				newNode->numCollisions++;
+				return newNode->key;
 			}
-			else { //when (key is > searchPtr->key)
-				parentPtr = searchPtr;
-				searchPtr = searchPtr->right;
-			}	
-		}
-		//inserts node onto the end of the tree
-		newNode->key = key;
-		//if it should be a left leaf
-		if (key < parentPtr->key){
-			parentPtr->left = newNode;
-			newNode->parent = parentPtr;
-			newNode->numCollisions++;
-			return searchPtr->key;
-		}
-		//if it should be a right leaf
-		else if (key > parentPtr->key) {
-			parentPtr->right = newNode;
-			newNode->parent = parentPtr;
-			newNode->numCollisions++;
-			return searchPtr->key;
-		}
-		//if we fucked up
-		else{
-			printf("WtF happend.\n");
-			free(newNode);
+			//if we fucked up
+			else{
+				printf("WtF happend.\n");
+				free(newNode);
+			}
 		}
 	}
 }
@@ -141,7 +180,9 @@ int delete(int key, Node **rootPtr){
 						collisionPtr = searchPtr;
 						searchPtr = searchPtr->repeat;
 						free(collisionPtr);
+
 					}
+					numNodes--;
 					return collprint;
 				}
 				//if the leaf we are trying to delete is a left node
@@ -156,6 +197,7 @@ int delete(int key, Node **rootPtr){
 						searchPtr = searchPtr->repeat;
 						free(collisionPtr);
 					}
+					numNodes--;
 					return collprint;
 				}	
 				//how can we return the amount of collisions after freeing the value?
@@ -176,6 +218,7 @@ int delete(int key, Node **rootPtr){
 						searchPtr = searchPtr->repeat;
 						free(collisionPtr);
 					}
+					numNodes--;
 					return collprint;
 				}
 				//if its a left node, and there is no right node
@@ -191,6 +234,7 @@ int delete(int key, Node **rootPtr){
 						searchPtr = searchPtr->repeat;
 						free(collisionPtr);
 					}
+					numNodes--;
 					return collprint;
 				}
 				//if the node we are trying to delete has both right and left children
@@ -211,6 +255,7 @@ int delete(int key, Node **rootPtr){
 							searchPtr = searchPtr->repeat;
 							free(collisionPtr);
 						}
+						numNodes--;
 						return collprint;
 					} 
 				}
@@ -404,33 +449,33 @@ int pred(int key, Node **rootPtr){
 
 
 int main(int argc, char const *argv[]){
+	printf("Start!\n");
 	Node *root = NULL;
 	int numNodes = 0;
 	char line[32];
+	char instruct[3];
+	int val = 0;
+
 	FILE *input = fopen(argv[1], "r");
-	while(fgets(line, 32, input) != NULL){
+	while(fscanf(input, "%s %d", instruct, &val) != EOF){
 		//printf("something here\n");
 
-		char instruct[3];
-		int val = 0;
 		// fscanf(input, "%s %d", instruct, &val);
 		//strncpy(instruct, line, 3);
-		fscanf(input, "%s %d", instruct, &val);
 
-		/*for (int i = 0; i < 3; ++i){
-			printf("some\n");
-			instruct[i] = line[i];
-			//printf(instruct[i]);
-		};*/
+		;
+		if (strcmp(instruct, "MIN") == 0 || strcmp(instruct, "MAX") == 0 ||
+				strcmp(instruct, "HEI") == 0){
+			val = 0;
+			printf("%s\n", "val = 0");
+		}
+		printf("%s\n ", instruct );
 
-		// scanf("%s %d", line)
-		// strncopy(instruct, line, 3);
-		
 		if (strncmp(instruct, "INS", 3) == 0){
 			//printf(instruct);
 			printf("%d", val);
 			printf(" at insert!! \n");
-			printf("%d", insert(val, &root));
+			printf("%d\n", insert(val, &root));
 			numNodes++;
 		}
 		else if (strncmp(instruct, "DEL", 3) == 0){
@@ -460,7 +505,6 @@ int main(int argc, char const *argv[]){
 		}
 		else if (strncmp(instruct, "HEI", 3) == 0){
 			//printf(instruct);
-			printf("%d", val);
 			printf(" height\n");
 			printf("dicks out for harambe \n");
 			float height = log10(numNodes+1)/log10(2);
@@ -469,12 +513,7 @@ int main(int argc, char const *argv[]){
 		else {
 			printf("None of the above.\n");
 		}
-		printf("end of loop\n");
 	}
-	printf("\nHello World\n");
-
-	insert(1, &root);
-	fclose(input);
 	return 0;
 
 }
