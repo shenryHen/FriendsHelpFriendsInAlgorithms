@@ -13,6 +13,7 @@ typedef struct Node
 	struct Node *parent;
 	struct Node *left;
 	struct Node *right;
+	struct Node *repeat;
 } Node; 
 //the root pointer of the tree 
 
@@ -41,12 +42,26 @@ int insert(int key, Node **rootPtr){
 		//move this this block somewhere else 
 		Node *searchPtr = *rootPtr;
 		Node *parentPtr;
-
+		
+		//creates new node for when we need to insert it
+		Node *newNode = malloc(sizeof(Node));
+		
 		//this while loop finds where to input the key
 		while(searchPtr != NULL){
 			//if the key is already in the tree
 			if(key == searchPtr->key){
+				//make sure to keep track of the number of collisions
 				searchPtr->numCollisions++;
+				//collisionPtr is created to bring us to the end of the chain
+				Node *collisionPtr = searchPtr;
+				//while loop to bring us to the end of the repeat chain
+				while(collisionPtr->repeat != NULL){
+					collisionPtr = collisionPtr->repeat;
+				}
+				//add newNode to the end of the chain
+				collisionPtr->repeat = newNode;
+				newNode->key = key;
+				return newNode->key;
 			}
 			else if (key < searchPtr->key){
 				//something happens...magic
@@ -59,21 +74,20 @@ int insert(int key, Node **rootPtr){
 			}	
 		}
 		//inserts node onto the end of the tree
-		Node *newNode = malloc(sizeof(Node));
 		newNode->key = key;
 		//if it should be a left leaf
 		if (key < parentPtr->key){
 			parentPtr->left = newNode;
 			newNode->parent = parentPtr;
 			newNode->numCollisions++;
-			return key;
+			return searchPtr->key;
 		}
 		//if it should be a right leaf
 		else if (key > parentPtr->key) {
 			parentPtr->right = newNode;
 			newNode->parent = parentPtr;
 			newNode->numCollisions++;
-			return key;
+			return searchPtr->key;
 		}
 		//if we fucked up
 		else{
@@ -84,6 +98,8 @@ int insert(int key, Node **rootPtr){
 }
 
 int delete(int key, Node **rootPtr){
+	//temporary variable so we can print the number of collisions
+	int collprint = 0;
 	//if the tree is empty return
 	if(!*rootPtr){
 		return 0;
@@ -102,37 +118,98 @@ int delete(int key, Node **rootPtr){
 				searchPtr = searchPtr->right;
 			}
 		}
-		//if we were to go through the whole tree 
+		//if we were to go through the whole tree without finding the key
 		if(searchPtr == NULL){
 			printf("key was not found in the binary tree...fuck off.");
 			return 0;
 		}
 		else{
-			if (searchPtr->right == NULL){ //if deleted node is a leaf
+			//if the node we want to delete is a leaf
+			if ((searchPtr->right == NULL) && (searchPtr->left == NULL)){ 
 				Node *tempParent = searchPtr->parent;
-				tempParent->right = NULL;
-				free(searchPtr);
-				//how can we return the amount of collisions after freeing the value?
-				//should we create a new variable and set it equal to searchPtr->numCollisions? 
-				return searchPtr->numCollisions;
-			}
-			else if (searchPtr->left == NULL){
-				Node *tempParent = searchPtr->parent;
-				tempParent->left = NULL;
-				free(searchPtr);
+				//if the leaf we are trying to delete is a right node
+				if(tempParent->right == searchPtr){
+					tempParent->right = NULL;
+					//so that you can print the number of collisions
+					collprint = searchPtr->numCollisions;
+					//delete the entire chain starts here
+					Node *collisionPtr = searchPtr;
+					//get us to the end of the chain deleting as we go.
+					while(searchPtr->repeat != NULL){
+						collisionPtr = searchPtr;
+						searchPtr = searchPtr->repeat;
+						free(collisionPtr);
+					}
+					return collprint;
+				}
+				//if the leaf we are trying to delete is a left node
+				else if(tempParent->left == searchPtr){
+					tempParent->left = NULL;
+					collprint = searchPtr->numCollisions;
+					//delete the entire chain starts here
+					Node *collisionPtr = searchPtr;
+					//get us to the end of the chain deleting as we go.
+					while(searchPtr->repeat != NULL){
+						collisionPtr = searchPtr;
+						searchPtr = searchPtr->repeat;
+						free(collisionPtr);
+					}
+					return collprint;
+				}	
 				//how can we return the amount of collisions after freeing the value?
 				//should we create a new variable and set it equal to searchPtr->numCollisions? 
 				return searchPtr->numCollisions;
 			}
 			else{ //not a leaf
-				Node *newPtr = searchPtr->right; //right might be null, 
-				while(newPtr->left != NULL){ //go to leftmost node in the right subtree
-					newPtr = newPtr->left;	
+				Node *tempParent = searchPtr->parent;
+				//if its a right node, and there is no left node
+				if((tempParent->right == searchPtr) && (tempParent->left == NULL)){
+					tempParent->right = searchPtr->right;
+					collprint = searchPtr->numCollisions;
+					//delete the entire chain starts here
+					Node *collisionPtr = searchPtr;
+					//get us to the end of the chain deleting as we go.
+					while(searchPtr->repeat != NULL){
+						collisionPtr = searchPtr;
+						searchPtr = searchPtr->repeat;
+						free(collisionPtr);
+					}
+					return collprint;
 				}
-				searchPtr->key = newPtr->key;
-				if (newPtr->right != NULL){ // if newPtr has right children
-					newPtr->parent->left = newPtr->right;
-					//need to return
+				//if its a left node, and there is no right node
+				else if ((tempParent->left == searchPtr) && (tempParent->right == NULL)){
+					tempParent->left == searchPtr->left;
+					collprint = searchPtr->numCollisions;
+					//delete the entire chain starts here
+					Node *collisionPtr = searchPtr;
+					//get us to the end of the chain deleting as we go.
+					while(searchPtr->repeat != NULL){
+						collisionPtr = searchPtr;
+						searchPtr = searchPtr->repeat;
+						free(collisionPtr);
+					}
+					return collprint;
+				}
+				//if the node we are trying to delete has both right and left children
+				else if ((tempParent->right != NULL) && (tempParent->left != NULL)){
+					Node *newPtr = searchPtr->right; 
+					while(newPtr->left != NULL){ //go to leftmost node in the right subtree
+						newPtr = newPtr->left;	
+					}
+					searchPtr->key = newPtr->key;
+					if (newPtr->right != NULL){ // if newPtr has right children(can't have left)
+						newPtr->parent->left = newPtr->right;
+						collprint = searchPtr->numCollisions;
+						//delete the entire chain starts here
+						Node *collisionPtr = searchPtr;
+						//get us to the end of the chain deleting as we go.
+						while(searchPtr->repeat != NULL){
+							collisionPtr = searchPtr;
+							searchPtr = searchPtr->repeat;
+							free(collisionPtr);
+						}
+						return collprint;
+					} 
 				}
 			}
 		}
@@ -146,7 +223,7 @@ int max(Node **rootPtr){
 	Node *searchPtr = *rootPtr;
 	//if the tree is empty we will return 0 instantly
 	if(searchPtr){
-		while (searchPtr->right != Null){
+		while (searchPtr->right != NULL){
 			//will go right until we reach the rightmost node
 			searchPtr = searchPtr->right;
 		}
@@ -165,7 +242,7 @@ int min(Node **rootPtr){
 	//if the tree is empty we will return 0 instantly
 	if(searchPtr){
 		//will go left until we reach the leftmost node
-		while (searchPtr->left != Null){
+		while (searchPtr->left != NULL){
 			searchPtr = searchPtr->left;
 		}
 		return searchPtr->key;
@@ -207,19 +284,19 @@ int search(int key, Node **rootPtr){
 //should find next largest key
 int succ(int key, Node **rootPtr){
 	//if the key is not in the tree return -1;
-	if(search(key) == 0){
+	if(search(key,&*rootPtr) == 0){
 		return -1;
 	}
 	//if the key is min return -1
-	if(key == min(*rootPtr){
+	if(key == min(&*rootPtr)){
 		return -1;
 	}
 	//if the key is the max return -1
-	if(key == max(*rootPtr){
+	if(key == max(&*rootPtr)){
 		return -1;
 	}
 	//if the tree is empty return -1
-	if(rootPtr = NULL){
+	if(rootPtr == NULL){
 		return -1;
 	}
 	//set the searchPtr equal to the root
@@ -236,34 +313,49 @@ int succ(int key, Node **rootPtr){
 	}
 	//the key has been found
 	else if (key == searchPtr->key){
-		//go one to the right
-			searchPtr = searchPtr->right;
+		//case 1 if it has a right pointer
+		if(searchPtr->right != NULL){
+			//go one to the right
+				searchPtr = searchPtr->right;
 			
-		//go all the way to the left until it is a leaf
-		while(searchPtr->left != NULL){ //go to leftmost node in the right subtree
-			searchPtr = searchPtr->left;	
+			//go all the way to the left until it is a leaf
+			while(searchPtr->left != NULL){ //go to leftmost node in the right subtree
+				searchPtr = searchPtr->left;	
+			}
+			//return the value of the succ
+			return searchPtr->key;
 		}
-		//return the value of the succ
-		return searchPtr->key;
+		//else if it is a leaf/doesnt have a right pointer
+		else{
+			//if the pointer we are trying to find the succesor of is a right node
+			if(searchPtr == searchPtr->parent->right){
+				searchPtr = searchPtr->parent->parent;
+			}
+			//if the pointer we are trying to find a succesor of is a left node
+			else if (searchPtr == searchPtr->parent->left){
+				searchPtr = searchPtr->parent;
+			}
+			return searchPtr->key;
+		}
 	}
 }
 
 //should find next smallest key
 int pred(int key, Node **rootPtr){
 	//if the key is not in the tree return -1;
-	if(search(key) == 0){
+	if(search(key,&*rootPtr) == 0){
 		return -1;
 	}
 	//if the key is min return -1
-	if(key == min(*rootPtr){
+	if(key == min(&*rootPtr)){
 		return -1;
 	}
 	//if the key is the max return -1
-	if(key == max(*rootPtr){
+	if(key == max(&*rootPtr)){
 		return -1;
 	}
 	//if the tree is empty return -1
-	if(rootPtr = NULL){
+	if(rootPtr == NULL){
 		return -1;
 	}
 	//set the searchPtr equal to the root
@@ -280,15 +372,30 @@ int pred(int key, Node **rootPtr){
 	}
 	//the key has been found
 	else if (key == searchPtr->key){
-		//go one to the left
-			searchPtr = searchPtr->left;
+		//case 1 if it has a left pointer
+		if(searchPtr->left != NULL){
+			//go one to the left
+				searchPtr = searchPtr->left;
 			
-		//go all the way to the right until it is a leaf
-		while(searchPtr->right != NULL){ //go to rightmost node in the left subtree
-			searchPtr = searchPtr->right;	
+			//go all the way to the right until it is a leaf
+			while(searchPtr->right != NULL){ //go to rightmost node in the right subtree
+				searchPtr = searchPtr->right;	
+			}
+			//return the value of the succ
+			return searchPtr->key;
 		}
-		//return the value of the succ
-		return searchPtr->key;
+		//else if it is a leaf/doesnt have a left pointer
+		else{
+			//if the pointer we are trying to find the pred of is a left node
+			if(searchPtr == searchPtr->parent->left){
+				searchPtr = searchPtr->parent->parent;
+			}
+			//if the pointer we are trying to find a pred of is a right node
+			else if (searchPtr == searchPtr->parent->right){
+				searchPtr = searchPtr->parent;
+			}
+			return searchPtr->key;
+		}
 	}
 }
 
