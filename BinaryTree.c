@@ -34,14 +34,16 @@ int numNodes = 0;
 //@param key, the key to be inserted
 //@param rootPtr, should be the root of the tree 
 int insert(int key, Node **rootPtr){
-	printf("\tin insert \n");
+	printf("\tin insert ");
 	printf("%d\n", key);
 	Node *searchPtr = *rootPtr;
 	Node *parentPtr = NULL;
 	Node *newNode = malloc(sizeof(Node));
+	newNode->key = key;
 	newNode->right = NULL; 
 	newNode->left = NULL;
 	newNode->parent = NULL;
+	newNode->repeat = NULL;
 	//if the tree is empty create the tree inserting the new key as the root
 	if (!*rootPtr){
 		printf("\ttree empty \n");
@@ -51,89 +53,103 @@ int insert(int key, Node **rootPtr){
 	}
 	else{
 		printf("\tadding to tree\n");
-		printf("search ptrs = %d %d \n ", searchPtr->left, searchPtr->right);
-		printf("searchPtr key = \n %d ", searchPtr->key);
-		printf("decl some vars \n");
+		if (key == searchPtr->key){ // if key is == root's key
+			printf("addind to root, chaining\n");
+				searchPtr->numCollisions++;
+				Node *collisionPtr = searchPtr->repeat;
+				if (collisionPtr == NULL){
+					collisionPtr = newNode;
+				}
+				else{
+					printf("\tgo to chain here\n");
+				}
+				return newNode->key;
+		}
+		//printf("search ptrs = %d %d \n ", searchPtr->left, searchPtr->right);
+		//printf("searchPtr key = \n %d ", searchPtr->key);
+		//printf("decl some vars \n");
 		//only for inserting at root
 		//move this this block somewhere else 
-		if ((searchPtr->left == NULL) || (searchPtr->right == NULL)){ // if adding to root node
+		/*if ((searchPtr->left == NULL) || (searchPtr->right == NULL)){ // if adding to root node
 			
 			printf("both sides null \n");
 			if (key < searchPtr->key){
 				searchPtr->left = newNode;
 				printf("err\n");
+				numNodes++;
 			}
 			else if(key > searchPtr->key){
 				searchPtr->right = newNode;
 				printf("err\n");
+				numNodes++;
 			}
 			else{
 				printf("do somee chanining here....\n");
 			}
-			return searchPtr->key;
-			printf("err\n");
-		}
-		else{
-			printf("%d some checking\n", searchPtr->left, searchPtr->right);
+			return newNode->key;
+		}*/
 		//creates new node for when we need to insert it		
 		//this while loop finds where to input the key
-			while(searchPtr->right != NULL || searchPtr->left != NULL){
-				printf("\tin while\n");
-				//printf("%d\n ", searchPtr->key);
-				//if the key is already in the tree
-				if(key == searchPtr->key){
-					printf("Chaining...\n");
-					//make sure to keep track of the number of collisions
-					searchPtr->numCollisions++;
-					//collisionPtr is created to bring us to the end of the chain
-					Node *collisionPtr = searchPtr;
-					//while loop to bring us to the end of the repeat chain
-					while(collisionPtr->repeat != NULL){
-						collisionPtr = collisionPtr->repeat;
-					}
-					//add newNode to the end of the chain
-					collisionPtr->repeat = newNode;
-					newNode->key = key;
-					return newNode->key;
+		// while right or left  point to nodes, wont run if both are null
+		while(searchPtr != NULL){
+			//print("\tin while\n");
+			////print("%d\n ", searchPtr->key);
+			//if the key is already in the tree
+			if(key == searchPtr->key){
+				//print("Chaining...\n");
+				//make sure to keep track of the number of collisions
+				searchPtr->numCollisions++;
+				//collisionPtr is created to bring us to the end of the chain
+				Node *collisionPtr = searchPtr;
+				//while loop to bring us to the end of the repeat chain
+				while(collisionPtr->repeat != NULL){
+					collisionPtr = collisionPtr->repeat;
 				}
-				else if (key < searchPtr->key){
-					printf("\t\tleft\n");
-					//something happens...magic
-					parentPtr = searchPtr;
-					printf("%s\n", "dfedfe");
-					searchPtr = searchPtr->left;
-					printf("nulled\n");
-					printf("%d\n", searchPtr);
-				}
-				else { //when (key is > searchPtr->key)
-					parentPtr = searchPtr;
-					searchPtr = searchPtr->right;
-				}	
-			}
-
-			//inserts node onto the end of the tree
-			newNode->key = key;
-			numNodes++;
-			printf("creating node");
-			//if it should be a left leaf
-			if (key < parentPtr->key){
-				parentPtr->left = newNode;
-				newNode->parent = parentPtr;
-				newNode->numCollisions++;
+				//add newNode to the end of the chain
+				collisionPtr->repeat = newNode;
+				newNode->key = key;
 				return newNode->key;
 			}
-			//if it should be a right leaf
-			else if (key > parentPtr->key) {
-				parentPtr->right = newNode;
-				newNode->parent = parentPtr;
-				newNode->numCollisions++;
-				return newNode->key;
+			else if (key < searchPtr->key){
+				//print("\tleft\n");
+				//something happens...magic
+				parentPtr = searchPtr;
+				searchPtr = searchPtr->left;
+				//print("\t parentPtr key %d\n", parentPtr->key);
 			}
-			//if we fucked up
-			else{
-				printf("WtF happend.\n");
-				free(newNode);
-			}
+			else { //when (key is > searchPtr->key)
+				//print("\tright\n");
+				parentPtr = searchPtr;
+				searchPtr = searchPtr->right;
+				//print("\treassigned ptrs\n");
+			}	
+		}
+		//print("\tadding new node to tree %d \n", parentPtr->key);
+		//inserts node onto a leaf of the tree
+		numNodes++;
+		//if it should be a left leaf
+		if (key < parentPtr->key){
+			//print("\tadding left\n");
+			newNode->parent = parentPtr;
+			parentPtr->left = newNode;
+/*				printf("\t right, left = %d ", searchPtr->left->key);
+			printf("\t parent = %d \n",  newNode->parent->key);*/
+			return newNode->key;
+		}
+		//if it should be a right leaf
+		else if (key >  parentPtr->key) {
+			//print("\t adding rightr \n");
+			newNode->parent = parentPtr;
+			parentPtr->right = newNode;
+			//	printf("\tadded left %d\n", parentPtr->right->key);
+			return newNode->key;
+		}
+		//if we fucked up
+		else{
+			//should not reach here
+			//print("\t key collision is %d\n", key);
+			//print("\tcollision in node.\n");
+			free(newNode);
 		}
 	}
 }
@@ -149,30 +165,39 @@ int delete(int key, Node **rootPtr){
 	else{
 		Node *searchPtr = *rootPtr;
 		Node *parentPtr;
-		
+		printf("\tdeleting a node, root exists\n");
 		//finding where the fuck dat key node is bruh
-		while(!((searchPtr->key == key) || (searchPtr == NULL))){
+		while(!((searchPtr == NULL) || (searchPtr->key == key) )){
+			printf("\tsearchPtr = ");
+			printf("%d\n", searchPtr->key);
 			if(key < searchPtr->key){
+				
 				searchPtr = searchPtr->left;
+				printf("\twent left\n");
 			}
 			else{ //searchPtr->key > key
+				printf("\twent right\n");
 				searchPtr = searchPtr->right;
 			}
 		}
 		//if we were to go through the whole tree without finding the key
 		if(searchPtr == NULL){
-			printf("key was not found in the binary tree...fuck off.");
+			printf("%s\n", "key was not found in the binary tree...fuck off.");
 			return 0;
 		}
 		else{
+			printf("\tnow deleting %d \n", searchPtr->key);
 			//if the node we want to delete is a leaf
 			if ((searchPtr->right == NULL) && (searchPtr->left == NULL)){ 
+				printf("\t is a leaf\n");
 				Node *tempParent = searchPtr->parent;
+				//printf("%d\n", );
 				//if the leaf we are trying to delete is a right node
 				if(tempParent->right == searchPtr){
 					tempParent->right = NULL;
 					//so that you can print the number of collisions
 					collprint = searchPtr->numCollisions;
+					printf("num on stack = %d\n", collprint);
 					//delete the entire chain starts here
 					Node *collisionPtr = searchPtr;
 					//get us to the end of the chain deleting as we go.
@@ -187,6 +212,7 @@ int delete(int key, Node **rootPtr){
 				}
 				//if the leaf we are trying to delete is a left node
 				else if(tempParent->left == searchPtr){
+					printf("\t chain to searchPtr here...\n");
 					tempParent->left = NULL;
 					collprint = searchPtr->numCollisions;
 					//delete the entire chain starts here
@@ -204,10 +230,65 @@ int delete(int key, Node **rootPtr){
 				//should we create a new variable and set it equal to searchPtr->numCollisions? 
 				return searchPtr->numCollisions;
 			}
-			else{ //not a leaf
+			else{ //not a leafs
+				printf("\t\n", "not a leaf, deleting ");
+				printf("%d", searchPtr->key);
 				Node *tempParent = searchPtr->parent;
+				//if is a root node
+				if (tempParent == NULL){
+					printf("%s\n", "\tdeleting root");
+					if (searchPtr->left ==  NULL && searchPtr->right == NULL){
+						printf("Root has no children\n");
+						int numColl = searchPtr->numCollisions;
+						free(searchPtr);
+						return numColl;
+					}
+					//if root has no left children
+					else if (searchPtr->left == NULL && searchPtr->right != NULL){
+						printf("\troot has no only right children\n");
+						Node *newPtr = searchPtr->right;
+						int tempKey = searchPtr->key;
+						while(newPtr->left != NULL){
+							newPtr = newPtr->left;
+						}
+						searchPtr->key = newPtr->key;
+						int numColl = searchPtr->numCollisions; 
+						free(newPtr);
+						numNodes--;
+						return numColl;
+					}
+					//if root has no right chidlren
+					else if (searchPtr->right == NULL && searchPtr->left != NULL){
+						printf("\troot has only left children\n");
+						Node *newPtr = searchPtr->left;
+						printf("\t%d %d\n", searchPtr->key, newPtr->key);
+						while(newPtr->right != NULL){
+							newPtr = newPtr->right;
+						}
+						searchPtr->key = newPtr->key;
+						int numColl = searchPtr->numCollisions; 
+						free(newPtr);
+						numNodes--;
+						return numColl;
+					}
+					else{
+						printf("\t root has children\n");
+						Node *newPtr = searchPtr->left;
+						while(newPtr->right != NULL){
+							newPtr = newPtr->right;
+						}
+						searchPtr->key = newPtr->key;
+						int numColl = searchPtr->numCollisions;
+						printf(" num coll %d\n", numColl);
+						free(newPtr);
+						numNodes--;
+						return numColl;
+					}
+					
+				}
+
 				//if its a right node, and there is no left node
-				if((tempParent->right == searchPtr) && (tempParent->left == NULL)){
+				else if ((tempParent->right == searchPtr) && (tempParent->left == NULL)){
 					tempParent->right = searchPtr->right;
 					collprint = searchPtr->numCollisions;
 					//delete the entire chain starts here
@@ -231,7 +312,7 @@ int delete(int key, Node **rootPtr){
 					//get us to the end of the chain deleting as we go.
 					while(searchPtr->repeat != NULL){
 						collisionPtr = searchPtr;
-						searchPtr = searchPtr->repeat;
+						searchPtr = *searchPtr->repeat;
 						free(collisionPtr);
 					}
 					numNodes--;
@@ -305,7 +386,7 @@ int min(Node **rootPtr){
 //or 0 if it is not
 int search(int key, Node **rootPtr){
 	Node *searchPtr = *rootPtr;
-	
+
 	//will keep searching until it returns or we reach the end of the tree
 	while(searchPtr != NULL){
 		//search left of current spot in tree
@@ -324,19 +405,19 @@ int search(int key, Node **rootPtr){
 			return 0;
 		}
 	}
+	if (searchPtr == NULL){
+		printf("%s\n", "searchptr is null");
+		return 0;
+	}
 	//if it were to break out of the while loop without choosing 0 or 1 some shits gone wrong
-	printf("Something went wrong with search of value %d", key);
+	printf("Something went wrong with search of value %d", &key);
 }
 
 //for predecessor and successor do the same thing we do to replace nodes after deleting them
 //should find next largest key
 int succ(int key, Node **rootPtr){
 	//if the key is not in the tree return -1;
-	if(search(key,&*rootPtr) == 0){
-		return -1;
-	}
-	//if the key is min return -1
-	if(key == min(&*rootPtr)){
+	if(search(key, &*rootPtr) == 0){
 		return -1;
 	}
 	//if the key is the max return -1
@@ -347,20 +428,29 @@ int succ(int key, Node **rootPtr){
 	if(rootPtr == NULL){
 		return -1;
 	}
+	printf("\ttraversing tree\n");
 	//set the searchPtr equal to the root
 	Node *searchPtr = *rootPtr;
-	
+	Node *parentPtr = NULL;
 	//find where the key is in the tree
 	//search left of current spot in tree
-	if(key < searchPtr->key){
-		searchPtr = searchPtr->left;
+	while(searchPtr != NULL){
+		if(key < searchPtr->key){
+			searchPtr = searchPtr->left;
+		}
+		//search right of current spot in tree
+		else if  (key > searchPtr->key){;
+			searchPtr = searchPtr->right;
+		}
+		else 
+			break;
 	}
-	//search right of current spot in tree
-	else if (key > searchPtr->key){
-		searchPtr = searchPtr->right;
-	}
+	printf("out of loop, %d \n", searchPtr->key);
+	//searchPtr = parentPtr; // point searchptr back on to tree
+
 	//the key has been found
-	else if (key == searchPtr->key){
+	if (key == searchPtr->key){
+		printf("\t key found %d \n", searchPtr->key);
 		//case 1 if it has a right pointer
 		if(searchPtr->right != NULL){
 			//go one to the right
@@ -371,6 +461,7 @@ int succ(int key, Node **rootPtr){
 				searchPtr = searchPtr->left;	
 			}
 			//return the value of the succ
+			printf("actual successor is %d\n", searchPtr->key);
 			return searchPtr->key;
 		}
 		//else if it is a leaf/doesnt have a right pointer
@@ -396,30 +487,34 @@ int pred(int key, Node **rootPtr){
 	}
 	//if the key is min return -1
 	if(key == min(&*rootPtr)){
+		printf("\t key is last\n");
 		return -1;
 	}
 	//if the key is the max return -1
-	if(key == max(&*rootPtr)){
-		return -1;
-	}
 	//if the tree is empty return -1
 	if(rootPtr == NULL){
 		return -1;
 	}
 	//set the searchPtr equal to the root
 	Node *searchPtr = *rootPtr;
+	while(searchPtr != NULL){
+		//search left of current spot in tree
+		if(key < searchPtr->key){
+			searchPtr = searchPtr->left;
+		}
+		//search right of current spot in tree
+		else if (key > searchPtr->key){
+			searchPtr = searchPtr->right;
+		}
+		else 
+			break;
+	}
 	
 	//find where the key is in the tree
-	//search left of current spot in tree
-	if(key < searchPtr->key){
-		searchPtr = searchPtr->left;
-	}
-	//search right of current spot in tree
-	else if (key > searchPtr->key){
-		searchPtr = searchPtr->right;
-	}
+	
 	//the key has been found
-	else if (key == searchPtr->key){
+	if (key == searchPtr->key){
+		printf("\t key found, %d \n", key );
 		//case 1 if it has a left pointer
 		if(searchPtr->left != NULL){
 			//go one to the left
@@ -447,11 +542,21 @@ int pred(int key, Node **rootPtr){
 	}
 }
 
+int printTree(Node **rootPtr){
+/*	Node *ptr = *rootPtr;
+	printf("%d\n", ptr->key);
+	 if(rootPtr == NULL)
+      return;
+  	printf("not null\n");
+    printTree(&ptr -> left);
+    printf("%d\n",ptr -> key);
+    printTree(&ptr ->right);*/
+
+}
 
 int main(int argc, char const *argv[]){
-	printf("Start!\n");
+	printf("Start ** !\n");
 	Node *root = NULL;
-	int numNodes = 0;
 	char line[32];
 	char instruct[3];
 	int val = 0;
@@ -466,7 +571,7 @@ int main(int argc, char const *argv[]){
 		;
 		if (strcmp(instruct, "MIN") == 0 || strcmp(instruct, "MAX") == 0 ||
 				strcmp(instruct, "HEI") == 0){
-			val = 0;
+			val = 0;	
 			printf("%s\n", "val = 0");
 		}
 		printf("%s\n ", instruct );
@@ -475,38 +580,45 @@ int main(int argc, char const *argv[]){
 			//printf(instruct);
 			printf("%d", val);
 			printf(" at insert!! \n");
-			printf("%d\n", insert(val, &root));
-			numNodes++;
+			int returned = insert(val, &root);
+			if (returned > 0){
+				printf("returned value = %d\n", returned);
+			}
 		}
 		else if (strncmp(instruct, "DEL", 3) == 0){
 			//printf(instruct);
 			printf("%d", val);
-			printf(" at del!! \n");
-			printf("%d", delete(val, &root));
-			numNodes--;
+			printf("at del!! \n");
+			printf("num deleted %d \n", delete(val, &root));
 		}
 		else if (strncmp(instruct, "SEA", 3) == 0){
 			//printf(instruct);
 			printf("%d", val);
-			printf(" at seach!! \n");
-			printf("%d", search(val, &root));
+			printf("at search!! \n");
+			printf("%d ", search(val, &root));
 		}
 		else if (strncmp(instruct, "MIN", 3) == 0){
-			//printf(instruct);
-			printf("%d", val);
-			printf(" at min!! \n");
-			printf("%d", min(&root));
+			//printf(instruct);;
+			printf("at min!! \n");
+			printf("%d ", min(&root));
+		}
+		else if (strncmp(instruct, "MAX", 3) == 0){
+			//printf(instruct);;
+			printf("at min!! \n");
+			printf("%d ", max(&root));
 		}
 		else if (strncmp(instruct, "SUC", 3) == 0){
 			//printf(instruct);
-			printf("%d", val);
-			printf(" succ \n");
-			printf("%d", succ(val, &root));
+			printf("at succ for %d is ", val); 
+			printf("%d ", succ(val, &root));
+		}
+		else if (strncmp(instruct, "PRE", 3) == 0){
+			printf("at pred for %d is ", val);
+			printf("%d \n", pred(val, &root));	
 		}
 		else if (strncmp(instruct, "HEI", 3) == 0){
 			//printf(instruct);
-			printf(" height\n");
-			printf("dicks out for harambe \n");
+			printf("height\n");
 			float height = log10(numNodes+1)/log10(2);
 			printf("%f\n", height);
 		}
@@ -517,3 +629,11 @@ int main(int argc, char const *argv[]){
 	return 0;
 
 }
+/*Node *leftSucc = searchPtr->right;
+						Node *rightSucc = searchPtr->left;
+						while(leftSucc->left != NULL){
+							leftSucc = leftSucc->left;
+						}
+						while(rightSucc->right != NULL){
+							rightSucc = rightSucc->right;
+						}*/
